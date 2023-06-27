@@ -1,0 +1,65 @@
+== flexi-serverless
+
+flexi-serverless is just a simple framework to run the same serverless function either locally (sequential or parallel) or on AWS Lambda for embarrassingly parallel applications.
+
+It is part of my master thesis at University of Vienna, Department of Computer Science.
+
+===  Requirements
+
+* https://developer.hashicorp.com/terraform[Terraform ]
+* https://aws.amazon.com/cli/[AWS CLI]
+
+// ===  Local Setup
+// [source,bash]
+// ----
+// ## Setup
+// # Copy the example env file and populate missing values
+// cp .env.example .env
+// ----
+
+=== Deployment & Testing using flexi-serverless
+
+==== 1. Compile client
+[source,bash]
+----
+cd client
+make
+----
+
+=== Manual Deployment & Testing
+
+If you want to deploy and test the function manually without using the framework, you can follow the steps below.
+
+==== 1. Create and Deploy Function
+
+Make to create the function handler and Dockerfile in the functions directory where the terraform files are located.
+
+[source,bash]
+----
+cd terraform/aws
+terraform init
+terraform plan
+terraform apply
+----
+
+==== 2. Test Function Locally
+[source,bash]
+----
+cd terraform/aws/functionName
+docker build -t docker-image:test .
+docker run -p 9000:8080 docker-image:test
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
+----
+
+==== 3. Test Function on AWS
+[source,bash]
+----
+ aws lambda invoke \
+--payload '{"beer": "tasty"}' --function-name example-dev \
+--cli-binary-format raw-in-base64-out \
+response.json
+
+----
+
+
+
