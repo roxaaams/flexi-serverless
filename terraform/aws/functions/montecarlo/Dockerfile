@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/nodejs:16
+FROM public.ecr.aws/lambda/nodejs:20
 
 # Copy function code
 COPY index.js ${LAMBDA_TASK_ROOT}

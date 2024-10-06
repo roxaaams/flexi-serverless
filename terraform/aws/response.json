@@ -1,1 +1,1 @@
-{"statusCode":200,"body":"\"Hello from Lambda!\""}
+{"statusCode":200,"body":"{\"results\":[{\"id\":1,\"distance\":4},{\"id\":2,\"distance\":3}]}"}

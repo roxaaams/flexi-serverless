@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <cstdlib>
 #include <mutex>
+#include <array> // Include this header for std::array
+
 
 std::string getENV() {
     const char* env_var_name = "FLEXI_PROVIDER";
@@ -42,17 +44,17 @@ std::string exec(const char* command) {
 }
 
  std::string invokeAWS(const std::string& function_name, const std::string& payload, int index) {
-    std::string command = "aws lambda invoke --payload '" + payload + "' --function-name " + function_name + " --cli-binary-format raw-in-base64-out response" + std::to_string(index) + ".json >nul 2>nul";
-    std::cout << command << std::endl;
+    std::string command = "aws lambda invoke --payload '" + payload + "' --function-name " + function_name + " --cli-binary-format raw-in-base64-out responses/response" + std::to_string(index) + ".json >nul 2>nul";
+//    std::cout << command << std::endl;
     system(command.c_str());
-    command = "cat response" + std::to_string(index) + ".json";
+    command = "cat responses/response" + std::to_string(index) + ".json";
     std::string result = exec(command.c_str());
     return result;
 }
 
 std::string invokeGCP(const std::string& function_name, const std::string& payload) {
     std::string command = "gcloud functions call " + function_name + " --data '" + payload + "' >nul 2>nul";
-    std::cout << command << std::endl;
+//    std::cout << command << std::endl;
     system(command.c_str());
     std::string result = exec("cat response.json");
     return result;

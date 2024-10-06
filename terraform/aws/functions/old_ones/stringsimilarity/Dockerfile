@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/nodejs:20
+FROM public.ecr.aws/lambda/nodejs:16
 
 # Copy function code and package.json
 COPY package.json ${LAMBDA_TASK_ROOT}

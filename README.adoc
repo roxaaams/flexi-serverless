@@ -8,6 +8,9 @@ It is part of my master thesis at University of Vienna, Department of Computer S
 
 * https://developer.hashicorp.com/terraform[Terraform ]
 * https://aws.amazon.com/cli/[AWS CLI]
+* google cli (gcloud)
+* https://docs.docker.com/engine/install/[Docker]
+
 
 // ===  Local Setup
 // [source,bash]
@@ -28,7 +31,7 @@ make
 
 === Manual Deployment & Testing
 
-If you want to deploy and test the function manually without using the framework, you can follow the steps below.
+If you want to deploy and test the function manually, you can follow the steps below.
 
 ==== 1. Create and Deploy Function
 
@@ -45,7 +48,7 @@ terraform apply
 ==== 2. Test Function Locally
 [source,bash]
 ----
-cd terraform/aws/functionName
+cd terraform/aws/functins/functionName
 docker build -t docker-image:test .
 docker run -p 9000:8080 docker-image:test
 curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{}'
@@ -61,5 +64,90 @@ response.json
 
 ----
 
+=== Manual Deployment & Testing Examples for Each Function and Client Application
 
+Monte Carlo Simulations
+
+[source,bash]
+----
+cd terraform/aws/functins/montecarlo
+docker build -t docker-image:montecarlo .
+docker run -p 9000:8080 docker-image:montercarlo
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '[{"id": 1, "iterations": 1000, "lowBound": 0, "upBound": 10}, {"id": 2, "iterations": 2000, "lowBound": 5, "upBound": 15}]' -H "Content-Type: application/json"
+
+aws lambda invoke \
+--payload '[{"id": 1, "iterations": 1000, "lowBound": 0, "upBound": 10}, {"id": 2, "iterations": 2000, "lowBound": 5, "upBound": 15}]' \
+--function-name montecarlo-dev \
+--cli-binary-format raw-in-base64-out \
+response.json
+cat response.json
+
+export FLEXI_PROVIDER=AWS
+cd application/monte-carlo-simulations
+./build-flex.sh
+./build.sh
+./build-local.sh
+./main [threads] [totalInvocations] [iterations]
+./mainlocal [threads] [totalInvocations] [iterations]
+
+
+----
+
+Image Filtering
+
+[source,bash]
+----
+cd terraform/aws/functins/imagefiltering
+npm i
+docker build -t docker-image:imagefiltering .
+docker run -p 9000:8080 docker-image:imagefiltering
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"imagePairs":[{"id":1,"imageUrl":"https://i.etsystatic.com/37370207/r/il/8322f3/5483389650/il_1588xN.5483389650_7hvp.jpg"},{"id":2,"imageUrl":"https://i.etsystatic.com/37370207/r/il/8322f3/5483389650/il_1588xN.5483389650_7hvp.jpg"}]}' -H "Content-Type: application/json"
+
+aws lambda invoke \
+--payload '{"imagePairs":[{"id":1,"imageUrl":"https://i.etsystatic.com/37370207/r/il/8322f3/5483389650/il_1588xN.5483389650_7hvp.jpg"},{"id":2,"imageUrl":"https://i.etsystatic.com/37370207/r/il/8322f3/5483389650/il_1588xN.5483389650_7hvp.jpg"}]}' \
+--function-name imagefiltering-dev \
+--cli-binary-format raw-in-base64-out \
+response.json
+
+
+export FLEXI_PROVIDER=AWS
+cd application/image-filtering
+./build-flex.sh
+./build.sh
+./build-local.sh
+./main.out <filename> [threads] [totalInvocations] [imagesPerInvocation]
+./mainlocal <filename> [threads] [totalInvocations] [imagesPerInvocation]
+
+e.g.
+./main 2 4 2
+./mainlocal 2 4 2
+----
+
+String Similarity
+
+[source,bash]
+----
+cd terraform/aws/functins/stringsimilarity
+docker build -t docker-image:stringsimilarity .
+docker run -p 9000:8080 docker-image:stringsimilarity
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d '[{"id":1,"str1":"hello","str2":"world"},{"id":2,"str1":"foo","str2":"bar"}]' -H "Content-Type: application/json"
+
+aws lambda invoke \
+--payload '[{"id":1,"str1":"hello","str2":"world"},{"id":2,"str1":"foo","str2":"bar"}]' \
+--function-name stringsimilarity-dev \
+--cli-binary-format raw-in-base64-out \
+response.json
+
+export FLEXI_PROVIDER=AWS
+cd application/string-similarity
+./build-flex.sh
+./build.sh
+./build-local.sh
+./main <filename> [threads] [pairs_per_invocation]
+./mainlocal <filename> [threads] [pairs_per_invocation]
+
+e.g.  ./main.out strings.txt 2 2
+
+
+----
 

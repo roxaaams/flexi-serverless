@@ -1,8 +1,3 @@
-// Function to integrate
-function myFunction(x) {
-    return Math.pow(x, 4) * Math.exp(-x);
-}
-
 exports.handler = async (event) => {
     // Retrieve the payload from the event object
     const payload = event;
@@ -11,48 +6,35 @@ exports.handler = async (event) => {
         // Process the payload or perform any desired operations
         console.log('Received payload:', payload);
 
-        let iterations = payload.iterations;
-        let lowBound = payload.lowBound;
-        let upBound = payload.upBound;
+        const results = await Promise.all(payload.map(async (item) => {
+            const { id, str1, str2 } = item;
 
-        if (iterations === undefined || iterations === null || iterations === ''
-        || lowBound === undefined || lowBound === null || lowBound === ''
-        || upBound === undefined || upBound === null || upBound === '') {
-            throw new Error('Iterations, lowBound, and upBound must be defined');
-        }
+            const len1 = str1.length;
+            const len2 = str2.length;
 
-        const statsArray = [0.0, 0.0];
+            const dp = new Array(len1 + 1).fill().map(() => new Array(len2 + 1).fill(0));
 
-        let totalSum = 0;
-        let totalSumSquared = 0;
+            for (let i = 0; i <= len1; ++i) {
+                dp[i][0] = i;
+            }
+            for (let j = 0; j <= len2; ++j) {
+                dp[0][j] = j;
+            }
 
-        let iter = 0;
+            for (let i = 1; i <= len1; ++i) {
+                for (let j = 1; j <= len2; ++j) {
+                    const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+                    dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+                }
+            }
 
-        while (iter < iterations - 1) {
-            const randNum = lowBound + Math.random() * (upBound - lowBound);
-
-            const functionVal = myFunction(randNum);
-
-            totalSum += functionVal;
-            totalSumSquared += Math.pow(functionVal, 2);
-
-            iter++;
-        }
-
-        const estimate = (upBound - lowBound) * totalSum / iterations;
-        const expected = totalSum / iterations;
-
-        const expectedSquare = totalSumSquared / iterations;
-
-        const std = (upBound - lowBound) * Math.sqrt((expectedSquare - Math.pow(expected, 2)) / (iterations - 1));
-
-        statsArray[0] = estimate;
-        statsArray[1] = std;
+            return { id, distance: dp[len1][len2] };
+        }));
 
         // Return a response
         const response = {
             statusCode: 200,
-            body: JSON.stringify({ statsArray }),
+            body: JSON.stringify({ results }),
         };
         return response;
     } catch (error) {
@@ -66,5 +48,4 @@ exports.handler = async (event) => {
         };
         return response;
     }
-
 };

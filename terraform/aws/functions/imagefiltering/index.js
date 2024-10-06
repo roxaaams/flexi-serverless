@@ -1,70 +1,68 @@
-// Function to integrate
-function myFunction(x) {
-    return Math.pow(x, 4) * Math.exp(-x);
-}
+const Jimp = require("jimp");
 
 exports.handler = async (event) => {
-    // Retrieve the payload from the event object
-    const payload = event;
+    const imagePairs = event.imagePairs; // Assuming an array of objects with { id, imageUrl }
 
     try {
-        // Process the payload or perform any desired operations
-        console.log('Received payload:', payload);
+        // Create an array of promises, each promise processes an image
+        const imageProcessingPromises = imagePairs.map(async (pair) => {
+            const { id, imageUrl } = pair;
 
-        let iterations = payload.iterations;
-        let lowBound = payload.lowBound;
-        let upBound = payload.upBound;
+            try {
+                const image = await Jimp.read({
+                    url: imageUrl, // Required!
+                    headers: {},
+                });
 
-        if (iterations === undefined || iterations === null || iterations === ''
-        || lowBound === undefined || lowBound === null || lowBound === ''
-        || upBound === undefined || upBound === null || upBound === '') {
-            throw new Error('Iterations, lowBound, and upBound must be defined');
-        }
+                let blackPixels = 0;
+                let whitePixels = 0;
 
-        const statsArray = [0.0, 0.0];
+                // Scan through the image
+                image.scan(0, 0, image.bitmap.width, image.bitmap.height, function (x, y, idx) {
+                    var red = this.bitmap.data[idx + 0];
+                    var green = this.bitmap.data[idx + 1];
+                    var blue = this.bitmap.data[idx + 2];
 
-        let totalSum = 0;
-        let totalSumSquared = 0;
+                    // Check if the pixel is a shade of gray (red == green == blue)
+                    if (red === green && green === blue) {
+                        if (red === 0) {
+                            blackPixels++;
+                        } else if (red === 255) {
+                            whitePixels++;
+                        }
+                    }
+                });
 
-        let iter = 0;
+                // Return the result for the current image pair
+                return {
+                    id,
+                    blackPixels,
+                    whitePixels,
+                };
 
-        while (iter < iterations - 1) {
-            const randNum = lowBound + Math.random() * (upBound - lowBound);
+            } catch (error) {
+                console.error(`Error processing image with id ${id}:`, error);
+                return {
+                    id,
+                    error: 'Error processing image'
+                };
+            }
+        });
 
-            const functionVal = myFunction(randNum);
+        // Wait for all the image processing promises to resolve
+        const results = await Promise.all(imageProcessingPromises);
 
-            totalSum += functionVal;
-            totalSumSquared += Math.pow(functionVal, 2);
-
-            iter++;
-        }
-
-        const estimate = (upBound - lowBound) * totalSum / iterations;
-        const expected = totalSum / iterations;
-
-        const expectedSquare = totalSumSquared / iterations;
-
-        const std = (upBound - lowBound) * Math.sqrt((expectedSquare - Math.pow(expected, 2)) / (iterations - 1));
-
-        statsArray[0] = estimate;
-        statsArray[1] = std;
-
-        // Return a response
-        const response = {
+        // Return the array of results
+        return {
             statusCode: 200,
-            body: JSON.stringify({ statsArray }),
+            body: JSON.stringify({ results }),
         };
-        return response;
+
     } catch (error) {
-        // Handle any errors that occur during processing
-        console.error('Error processing payload:', error);
-
-        // Return an error response
-        const response = {
+        console.error('Error processing images:', error);
+        return {
             statusCode: 500,
-            body: JSON.stringify({ message: error.message || 'An error occurred during function execution' }),
+            body: 'Error processing images',
         };
-        return response;
     }
-
 };

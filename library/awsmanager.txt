@@ -1,0 +1,106 @@
+//#include <aws/core/Aws.h>
+//#include <aws/lambda/LambdaClient.h>
+//#include <aws/lambda/model/InvokeRequest.h>
+//#include <aws/lambda/model/InvocationType.h>
+//#include <aws/core/Aws.h>
+
+///*
+// * Taken from https://github.com/wiredtiger/wiredtiger/blob/7ef518cd7c8c0f8e4a608a13ebcf6d2484e049ad/ext/storage_sources/s3_store/s3_aws_manager.h#L78
+// */
+//class AwsManager {
+//public:
+//    static AwsManager &
+//    Get()
+//    {
+//        return aws_instance;
+//    }
+//
+//    // Public facing function to call the SDK initialization and abstract the reference to the
+//    // class.
+//    static void
+//    Init()
+//    {
+//        return Get().InitInternal();
+//    }
+//
+//    // Public facing function to call the SDK shutdown and abstract the reference to the class.
+//    static void
+//    Terminate()
+//    {
+//        return Get().TerminateInternal();
+//    }
+//
+//private:
+//    AwsManager()
+//    {
+//        refCount = 0;
+//    }
+//
+//    // Check the number of references to the class and initialize the AWS SDK if it's the first
+//    // reference.
+//    void
+//    InitInternal()
+//    {
+//        std::lock_guard<std::mutex> lock(InitGuard);
+//        if (refCount == 0) {
+//            Aws::InitAPI(options);
+//        }
+//        refCount++;
+//    }
+//
+//    // Check the number of references to the class and shutdown the AWS SDK if there are no more
+//    // references.
+//    void
+//    TerminateInternal()
+//    {
+//        std::lock_guard<std::mutex> lock(InitGuard);
+//        refCount--;
+//        if (refCount == 0) {
+//            Aws::ShutdownAPI(options);
+//        }
+//    }
+//
+//    static AwsManager aws_instance;
+//    Aws::SDKOptions options;
+//    int refCount;
+//    static std::mutex InitGuard;
+//};
+//
+//// Define the AwsManager class
+//std::mutex AwsManager::InitGuard;
+//AwsManager AwsManager::aws_instance;
+
+
+
+//    std::string response_payload = "";
+//
+//   // 1. Initialize the AWS SDK
+//    AwsManager::Init();
+//
+//    // 2. Create an AWS Lambda client
+//    Aws::Client::ClientConfiguration client_config;
+//    Aws::Lambda::LambdaClient lambda_client(client_config);
+//
+//    // 3. Define the function name and payload - see arguments
+//
+//    // 4. Create an InvokeRequest with the function name and payload
+//    Aws::Lambda::Model::InvokeRequest invoke_request;
+//    invoke_request.SetFunctionName(function_name);
+//    invoke_request.SetInvocationType(Aws::Lambda::Model::InvocationType::RequestResponse);
+//    invoke_request.SetPayload(payload);
+//
+//    // 5. Invoke the Lambda function
+//    auto outcome = lambda_client.Invoke(invoke_request);
+//
+//    if (outcome.IsSuccess()) {
+//        auto& result = outcome.GetResult();
+//        response_payload = result.GetPayload().AsString();
+//        std::cout << "Lambda function response: " << response_payload << std::endl;
+//    }
+//    else {
+//        std::cout << "Failed to invoke Lambda function: " << outcome.GetError().GetMessage() << std::endl;
+//    }
+//
+//    // Shutdown the AWS SDK
+////    AwsManager::Terminate();
+//    return response_payload;

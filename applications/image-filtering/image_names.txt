@@ -1,2 +1,0 @@
-apollo.ppm  bird2.ppm landscape.ppm monument.ppm skylight.ppm
-

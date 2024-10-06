@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 4.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -11,26 +11,48 @@ provider "aws" {
   region = var.aws_region
 }
 
-
 locals {
-  function_name               = "example"
-  function_handler            = "index.handler"
-  function_runtime            = "nodejs16.x"
-  function_timeout_in_seconds = 5
+  functions = [
+    {
+      name               = "stringsimilarity"
+      handler            = "index.handler"
+      runtime            = "nodejs20.x"
+      timeout_in_seconds = 5
+      memory_size        = 512
 
-  function_source_dir = "${path.module}/functions/${local.function_name}"
+    },
+    {
+      name               = "imagefiltering"
+      handler            = "index.handler"
+      runtime            = "nodejs20.x"
+      timeout_in_seconds = 900
+      memory_size        = 9728
+
+    },
+    {
+      name               = "montecarlo"
+      handler            = "index.handler"
+      runtime            = "nodejs20.x"
+      timeout_in_seconds = 5
+      memory_size        = 512
+
+    }
+  ]
 }
 
 resource "aws_lambda_function" "function" {
-  function_name = "${local.function_name}-${var.env_name}"
-  handler       = local.function_handler
-  runtime       = local.function_runtime
-  timeout       = local.function_timeout_in_seconds
+  count = length(local.functions)
 
-  filename         = "${local.function_source_dir}.zip"
-  source_code_hash = data.archive_file.function_zip.output_base64sha256
+  function_name = "${local.functions[count.index].name}-${var.env_name}"
+  handler       = local.functions[count.index].handler
+  runtime       = local.functions[count.index].runtime
+  timeout       = local.functions[count.index].timeout_in_seconds
+  memory_size   = local.functions[count.index].memory_size
 
-  role = aws_iam_role.function_role.arn
+  filename         = "${path.module}/functions/${local.functions[count.index].name}.zip"
+  source_code_hash = data.archive_file.function_zip[count.index].output_base64sha256
+
+  role = aws_iam_role.function_role[count.index].arn
 
   environment {
     variables = {
@@ -40,13 +62,17 @@ resource "aws_lambda_function" "function" {
 }
 
 data "archive_file" "function_zip" {
-  source_dir  = local.function_source_dir
+  count = length(local.functions)
+
+  source_dir  = "${path.module}/functions/${local.functions[count.index].name}"
   type        = "zip"
-  output_path = "${local.function_source_dir}.zip"
+  output_path = "${path.module}/functions/${local.functions[count.index].name}.zip"
 }
 
 resource "aws_iam_role" "function_role" {
-  name = "${local.function_name}-${var.env_name}"
+  count = length(local.functions)
+
+  name = "${local.functions[count.index].name}-${var.env_name}"
 
   assume_role_policy = jsonencode({
     Statement = [

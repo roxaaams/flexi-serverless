@@ -1,7 +1,10 @@
-FROM public.ecr.aws/lambda/nodejs:16
+FROM public.ecr.aws/lambda/nodejs:20
 
-# Copy function code
-COPY index.js ${LAMBDA_TASK_ROOT}
+# Copy function code and package.json
+COPY package.json ${LAMBDA_TASK_ROOT}
+COPY index.js  ${LAMBDA_TASK_ROOT}
+
+RUN npm install
 
 # Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
 CMD [ "index.handler" ]
